@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub:*)",
+      "Bash(flutter analyze:*)",
+      "Read(//dev/**)",
+      "Bash(ls /dev/cu.*)",
+      "Bash(system_profiler SPUSBDataType)",
+      "Bash(ioreg -p IOUSB -l)",
+      "Bash(ioreg -p IOUSB -w0)",
+      "Bash(ioreg -p IOUSB -w0 -l)",
+      "Bash(brew list:*)",
+      "Bash(brew info:*)",
+      "Read(//opt/homebrew/Caskroom/wch-ch34x-usb-serial-driver/2.0/**)",
+      "Read(//Users/cplantev/.pub-cache/hosted/pub.dev/flutter_local_notifications-18.0.1/lib/src/platform_specifics/darwin/**)",
+      "Bash(find /Users/cplantev/Documents/rodalertmobile/ios -name *.swift -o -name *.m)",
+      "Bash(find /Users/cplantev/Documents/rodalertmobile -type f \\\\\\(-name *.dart -o -name *.xml -o -name *.gradle \\\\\\))",
+      "Read(//Users/cplantev/Documents/RodAlert/**)"
+    ]
+  }
+}
