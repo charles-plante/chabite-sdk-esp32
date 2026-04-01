@@ -4,8 +4,8 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#define SERVICE_UUID        "12345678-1234-1234-1234-123456789abc"
-#define CHARACTERISTIC_UUID "abcd1234-ab12-cd34-ef56-123456789abc"
+#define SERVICE_UUID        "1fa3fdf2-0a5c-40eb-b520-6d31560637ab"
+#define CHARACTERISTIC_UUID "44f675d0-c42f-4a7a-9e9d-6acb50c9d162"
 
 BLEServer *pServer = nullptr;
 BLECharacteristic *pCharacteristic = nullptr;
@@ -26,11 +26,22 @@ class ServerCallbacks : public BLEServerCallbacks {
   }
 };
 
+String getRodId() {
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_BT);
+  char id[7];
+  snprintf(id, sizeof(id), "%02X%02X%02X", mac[3], mac[4], mac[5]);
+  return String(id);
+}
+
 void setup() {
   Serial.begin(115200);
-  Serial.println("RodAlert starting...");
 
-  BLEDevice::init("RodAlert");
+  String rodId = getRodId();
+  String deviceName = "Chabite-" + rodId;
+  Serial.println(deviceName + " starting...");
+
+  BLEDevice::init(deviceName.c_str());
 
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
@@ -57,8 +68,8 @@ void setup() {
 
 void loop() {
   if (deviceConnected && !notificationSent) {
-    const char *msg = "RodAlert: Device started";
-    pCharacteristic->setValue((uint8_t *)msg, strlen(msg));
+    String msg = "Chabite-" + getRodId() + ": Device started";
+    pCharacteristic->setValue((uint8_t *)msg.c_str(), msg.length());
     pCharacteristic->notify();
     notificationSent = true;
     Serial.println("Notification sent to app");
