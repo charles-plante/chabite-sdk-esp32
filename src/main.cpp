@@ -3,6 +3,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <rod_id.h>
 
 #define SERVICE_UUID        "1fa3fdf2-0a5c-40eb-b520-6d31560637ab"
 #define CHARACTERISTIC_UUID "44f675d0-c42f-4a7a-9e9d-6acb50c9d162"
@@ -29,8 +30,8 @@ class ServerCallbacks : public BLEServerCallbacks {
 String getRodId() {
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_BT);
-  char id[7];
-  snprintf(id, sizeof(id), "%02X%02X%02X", mac[3], mac[4], mac[5]);
+  char id[ROD_ID_LEN];
+  formatRodId(mac, id, sizeof(id));
   return String(id);
 }
 
@@ -38,7 +39,9 @@ void setup() {
   Serial.begin(115200);
 
   String rodId = getRodId();
-  String deviceName = "Chabite-" + rodId;
+  char nameBuf[ROD_DEVICE_NAME_LEN];
+  buildDeviceName(rodId.c_str(), nameBuf, sizeof(nameBuf));
+  String deviceName(nameBuf);
   Serial.println(deviceName + " starting...");
 
   BLEDevice::init(deviceName.c_str());
