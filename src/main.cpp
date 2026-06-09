@@ -3,6 +3,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <esp_mac.h>
 #include <rod_id.h>
 
 #define SERVICE_UUID        "1fa3fdf2-0a5c-40eb-b520-6d31560637ab"
@@ -10,20 +11,19 @@
 
 BLEServer *pServer = nullptr;
 BLECharacteristic *pCharacteristic = nullptr;
-bool deviceConnected = false;
-bool notificationSent = false;
+volatile bool sendStartupNotification = false;
+volatile bool resumeAdvertising = false;
 
 class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) override {
-    deviceConnected = true;
-    notificationSent = false;
+    sendStartupNotification = true;
+    // ESP32 stops advertising once a client connects; resume it so additional
+    // phones can also pair to the same Chatbite simultaneously.
+    resumeAdvertising = true;
   }
 
   void onDisconnect(BLEServer *pServer) override {
-    deviceConnected = false;
-    notificationSent = false;
-    // Restart advertising so the app can reconnect
-    pServer->getAdvertising()->start();
+    resumeAdvertising = true;
   }
 };
 
@@ -56,7 +56,6 @@ void setup() {
     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
   );
 
-  // Add the descriptor required for notifications
   pCharacteristic->addDescriptor(new BLE2902());
 
   pService->start();
@@ -66,16 +65,23 @@ void setup() {
   pAdvertising->setScanResponse(true);
   pAdvertising->start();
 
-  Serial.println("BLE advertising started, waiting for connection...");
+  Serial.println("BLE advertising started, waiting for connection(s)...");
 }
 
 void loop() {
-  if (deviceConnected && !notificationSent) {
+  if (resumeAdvertising) {
+    resumeAdvertising = false;
+    pServer->getAdvertising()->start();
+  }
+
+  if (sendStartupNotification && pServer->getConnectedCount() > 0) {
+    sendStartupNotification = false;
     String msg = "Chabite-" + getRodId() + ": Device started";
     pCharacteristic->setValue((uint8_t *)msg.c_str(), msg.length());
     pCharacteristic->notify();
-    notificationSent = true;
-    Serial.println("Notification sent to app");
+    Serial.print("Notification sent (");
+    Serial.print(pServer->getConnectedCount());
+    Serial.println(" client(s) connected)");
   }
 
   delay(100);
