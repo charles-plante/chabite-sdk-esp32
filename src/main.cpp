@@ -9,6 +9,13 @@
 #define SERVICE_UUID        "1fa3fdf2-0a5c-40eb-b520-6d31560637ab"
 #define CHARACTERISTIC_UUID "44f675d0-c42f-4a7a-9e9d-6acb50c9d162"
 
+#define TOGGLE_PIN_A 10
+#define TOGGLE_PIN_B 18
+#define TOGGLE_INTERVAL_MS 200
+
+unsigned long lastToggleMs = 0;
+bool toggleState = false;
+
 BLEServer *pServer = nullptr;
 BLECharacteristic *pCharacteristic = nullptr;
 volatile bool sendStartupNotification = false;
@@ -37,6 +44,11 @@ String getRodId() {
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(TOGGLE_PIN_A, OUTPUT);
+  pinMode(TOGGLE_PIN_B, OUTPUT);
+  digitalWrite(TOGGLE_PIN_A, LOW);
+  digitalWrite(TOGGLE_PIN_B, LOW);
 
   String rodId = getRodId();
   char nameBuf[ROD_DEVICE_NAME_LEN];
@@ -82,6 +94,14 @@ void loop() {
     Serial.print("Notification sent (");
     Serial.print(pServer->getConnectedCount());
     Serial.println(" client(s) connected)");
+  }
+
+  unsigned long now = millis();
+  if (now - lastToggleMs >= TOGGLE_INTERVAL_MS) {
+    lastToggleMs = now;
+    toggleState = !toggleState;
+    digitalWrite(TOGGLE_PIN_A, toggleState);
+    digitalWrite(TOGGLE_PIN_B, toggleState);
   }
 
   delay(100);
